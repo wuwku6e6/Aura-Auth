@@ -34,12 +34,9 @@ const EN = {
 	'Аккаунт: ': 'Account: ',
 	'Отклонить': 'Decline',
 	'Подтвердить': 'Confirm',
-	'Не в сети': 'Offline',
 	'Требуется пароль для входа': 'Password required to log in',
 
 	// --- AccountCard ---
-	'Не играет': 'Not playing',
-	'Играет: {games}': 'Playing: {games}',
 	'Код входа': 'Login code',
 	'Скопировано ✓': 'Copied ✓',
 	'Код Steam Guard, обновится через {n}с. Нажмите, чтобы скопировать': 'Steam Guard code, refreshes in {n}s. Click to copy',
@@ -177,7 +174,6 @@ const EN = {
 	'Ошибка проверки входа': 'Login check error',
 	'Переименовать': 'Rename',
 	'Выполнить контракты обмена CS2 без запуска игры': 'Perform CS2 exchange contracts without launching the game',
-	'нельзя': 'invalid',
 
 	// --- Cs2TradeWindow (contract/recipe tooltip) ---
 	'Качество:': 'Quality:',
