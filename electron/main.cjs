@@ -12,6 +12,29 @@ const isDev = !!process.env.VITE_DEV_SERVER_URL;
 let mainWindow = null;
 let manager = null;
 
+// ─── startup diagnostics ─────────────────────────────────────────
+// Crash/error logging is ALWAYS on: writes to aura-auth-startup.log so we can
+// diagnose a "window doesn't open" report on a user machine. Milestone logs
+// only fire when DEBUG_STARTUP=1 (devtools-style verbose tracing).
+const dbg = process.env.DEBUG_STARTUP === '1';
+const startupLog = path.join(app.getPath('userData'), 'aura-auth-startup.log');
+function crashLog(msg) {
+	try { fs.appendFileSync(startupLog, new Date().toISOString() + ' [main] ' + msg + '\r\n'); } catch (e) { /* ignore */ }
+}
+function dbgLog(msg) { if (dbg) crashLog(msg); }
+process.on('uncaughtException', (e) => crashLog('uncaughtException: ' + (e && e.stack ? e.stack : e)));
+process.on('unhandledRejection', (e) => crashLog('unhandledRejection: ' + (e && e.stack ? e.stack : e)));
+app.on('web-contents-created', (_e, contents) => {
+	if (contents.getType() === 'webContents' || contents.getType() === 'backgroundPage') {
+		contents.on('render-process-gone', (_c, details) => {
+			crashLog('render-process-gone: ' + JSON.stringify(details));
+		});
+		contents.on('did-fail-load', (_c, errCode, errDesc, url) => {
+			crashLog('did-fail-load: code=' + errCode + ' desc=' + errDesc + ' url=' + url);
+		});
+	}
+});
+
 // Провайдерский/системный DNS отдаёт для API Steam «мёртвые» IP (например,
 // 139.45.x.x), из-за чего все desktop-клиенты таймаутят, а браузер работает —
 // потому что он резолвит через DoH (DNS-over-HTTPS) и получает живые IP.
@@ -104,6 +127,12 @@ function createWindow() {
 	});
 
 	mainWindow.on('closed', () => { mainWindow = null; });
+	mainWindow.webContents.on('render-process-gone', (_e, details) => {
+		crashLog('render-process-gone (main): ' + JSON.stringify(details));
+	});
+	mainWindow.webContents.on('did-fail-load', (_e, errCode, errDesc, url) => {
+		crashLog('did-fail-load (main): code=' + errCode + ' desc=' + errDesc + ' url=' + url);
+	});
 }
 
 function broadcast(channel, payload) {
@@ -571,25 +600,30 @@ function migrateLegacyDataDir(newDataDir) {
 	}
 }
 
+// Disable GPU acceleration: on secondary PCs / VMs / RDP the GPU process can
+// blank the window (process alive, no visible window).
+app.disableHardwareAcceleration();
+
 app.whenReady().then(() => {
+	dbgLog('ready');
 	applyPublicDns();
-	// Account data (maFiles, accounts.json, settings.json) lives next to the
-	// executable in packaged mode, or at the project root in dev mode — same as
-	// the classic Steam Desktop Authenticator. This is a writable location
-	// when the app is installed per-user (perMachine:false).
-	const dataDir = app.isPackaged
-		? path.join(path.dirname(app.getExecutablePath()), 'maFiles')
-		: path.join(__dirname, '..', 'maFiles');
+	dbgLog('dns applied');
+		const dataDir = app.isPackaged
+			? path.join(path.dirname(app.getExecutablePath()), 'maFiles')
+			: path.join(__dirname, '..', 'maFiles');
 	// One-time migration: if the new location is empty, copy accounts/settings
 	// from the old %APPDATA% location so existing data isn't lost on upgrade.
 	migrateLegacyDataDir(dataDir);
 	fs.mkdirSync(dataDir, { recursive: true });
 	manager = new AccountManager(dataDir);
 	manager.init();
+	dbgLog('manager init done, dataDir=' + dataDir);
 	setupIPC();
 	setupAutoUpdater();
 	createWindow();
+	dbgLog('window created');
 	startLoginPoller();
+	dbgLog('startup complete');
 
 	// Attempt auto-login for accounts that have refresh tokens
 	setTimeout(() => {
