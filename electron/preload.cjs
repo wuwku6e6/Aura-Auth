@@ -44,10 +44,15 @@ contextBridge.exposeInMainWorld('aura', {
 	addRecipient: (data) => ipcRenderer.invoke('recipients:add', data),
 	updateRecipient: (id, patch) => ipcRenderer.invoke('recipients:update', { id, patch }),
 	removeRecipient: (id) => ipcRenderer.invoke('recipients:remove', id),
-	openMaFileDialog: () => ipcRenderer.invoke('dialog:openMafile'),
+ 	openMaFileDialog: () => ipcRenderer.invoke('dialog:openMafile'),
 
-	on: (channel, cb) => {
-		const valid = ['account:status', 'account:offers', 'account:confirmations', 'guard:request', 'mass:status', 'log:update', 'inventory:selected', 'login:request', 'settings:changed'];
+	checkForUpdates: () => ipcRenderer.invoke('app:checkForUpdates'),
+	getVersion: () => ipcRenderer.invoke('app:getVersion'),
+	installUpdate: () => ipcRenderer.invoke('app:installUpdate'),
+	openExternalLink: (url) => ipcRenderer.invoke('app:openExternalLink', url),
+
+ 	on: (channel, cb) => {
+ 		const valid = ['account:status', 'account:offers', 'account:confirmations', 'guard:request', 'mass:status', 'log:update', 'inventory:selected', 'login:request', 'settings:changed', 'app:updateAvailable', 'app:updateProgress'];
 		if (!valid.includes(channel)) return () => {};
 		const listener = (event, payload) => cb(payload);
 		ipcRenderer.on(channel, listener);

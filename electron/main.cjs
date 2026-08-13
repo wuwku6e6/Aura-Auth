@@ -440,6 +440,23 @@ function setupIPC() {
 		return s;
 	});
 
+	// --- App info / auto-update ---
+	ipcMain.handle('app:checkForUpdates', async () => {
+		if (!app.isPackaged) return { available: false, current: app.getVersion() };
+		const result = await autoUpdater.checkForUpdates();
+		return {
+			current: app.getVersion(),
+			available: !!result?.updateInfo?.version,
+			version: result?.updateInfo?.version,
+			notInstalled: !!result?.updateInfo?.version && result.updateInfo.version !== app.getVersion()
+		};
+	});
+	ipcMain.handle('app:getVersion', () => app.getVersion());
+	ipcMain.handle('app:installUpdate', async () => {
+		await autoUpdater.quitAndInstall();
+	});
+	ipcMain.handle('app:openExternalLink', (event, url) => shell.openExternal(url));
+
 	ipcMain.handle('confirms:list', (event, name) => wrap(event, async () => manager.getConfirmations(name)));
 	ipcMain.handle('confirms:acceptAll', (event, name) => wrap(event, async () => manager.acceptAllConfirmations(name)));
 	ipcMain.handle('confirms:respond', (event, { name, confId, confKey, accept }) => wrap(event, async () => manager.respondConfirmation(name, confId, confKey, accept)));
@@ -508,21 +525,30 @@ function setupIPC() {
 function setupAutoUpdater() {
 	if (!app.isPackaged) return; // only update the installed (packaged) build
 	const log = getLogger('updater');
-	autoUpdater.autoDownload = true;
-	autoUpdater.autoInstallOnAppQuit = true;
+	autoUpdater.autoDownload = false; // we prompt the user in the UI instead
+	autoUpdater.autoInstallOnAppQuit = false;
 
+	// Inform any open window so Settings can show an update banner.
 	autoUpdater.on('update-available', (info) => {
 		log.info(`Доступно обновление ${info.version}`);
+		broadcastAll('app:updateAvailable', { available: true, version: info.version, info });
 	});
-	autoUpdater.on('update-not-available', () => {});
-	autoUpdater.on('download-progress', () => {});
+	autoUpdater.on('update-not-available', () => {
+		broadcastAll('app:updateAvailable', { available: false });
+	});
+	autoUpdater.on('download-progress', (p) => {
+		broadcastAll('app:updateProgress', p);
+	});
 	autoUpdater.on('update-downloaded', (info) => {
-		log.info(`Обновление ${info.version} загружено — установится при выходе из приложения`);
+		log.info(`Обновление ${info.version} загружено`);
+		broadcastAll('app:updateAvailable', { available: true, version: info.version, downloaded: true, info });
 	});
 	autoUpdater.on('error', (err) => {
 		log.warn(`Ошибка авто-обновления: ${err.message}`);
+		broadcastAll('app:updateAvailable', { available: false, error: err.message });
 	});
 
+	// Background check on startup (silent — UI only reacts when window is open).
 	autoUpdater.checkForUpdatesAndNotify().catch((e) => {
 		log.warn(`Не удалось проверить обновления: ${e.message}`);
 	});

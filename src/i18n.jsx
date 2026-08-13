@@ -239,7 +239,12 @@ const EN = {
 	'Язык': 'Language',
 	'Тема': 'Theme',
 	'Русский': 'Russian',
-	'Английский': 'English'
+	'Английский': 'English',
+	'Версия': 'Version',
+	'Доступно обновление': 'Update available',
+	'Установить': 'Install',
+	'Обновить сейчас': 'Update now',
+	'Позже': 'Later'
 };
 
 const I18nContext = createContext(null);
