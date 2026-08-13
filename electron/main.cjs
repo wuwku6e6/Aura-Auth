@@ -528,13 +528,35 @@ function setupAutoUpdater() {
 	});
 }
 
+function migrateLegacyDataDir(newDataDir) {
+	if (!app.isPackaged) return; // only relevant for upgraded packaged installs
+	const legacy = path.join(app.getPath('userData'), 'maFiles');
+	// уже есть данные в новой папке — мигрировать не нужно
+	if (fs.existsSync(newDataDir) && fs.readdirSync(newDataDir).length > 0) return;
+	if (!fs.existsSync(legacy)) return;
+	try {
+		fs.mkdirSync(newDataDir, { recursive: true });
+		fs.cpSync(legacy, newDataDir, { recursive: true });
+		const log = getLogger('migrate');
+		log.info('Перенесены аккаунты из ' + legacy + ' в ' + newDataDir);
+	} catch (e) {
+		const log = getLogger('migrate');
+		log.warn('Не удалось мигрировать maFiles из ' + legacy + ': ' + e.message);
+	}
+}
+
 app.whenReady().then(() => {
 	applyPublicDns();
-	// In packaged mode __dirname lives inside the read-only asar, so account data
-	// must go to the writable userData directory instead of a path relative to it.
+	// Account data (maFiles, accounts.json, settings.json) lives next to the
+	// executable in packaged mode, or at the project root in dev mode — same as
+	// the classic Steam Desktop Authenticator. This is a writable location
+	// when the app is installed per-user (perMachine:false).
 	const dataDir = app.isPackaged
-		? path.join(app.getPath('userData'), 'maFiles')
+		? path.join(path.dirname(app.getExecutablePath()), 'maFiles')
 		: path.join(__dirname, '..', 'maFiles');
+	// One-time migration: if the new location is empty, copy accounts/settings
+	// from the old %APPDATA% location so existing data isn't lost on upgrade.
+	migrateLegacyDataDir(dataDir);
 	fs.mkdirSync(dataDir, { recursive: true });
 	manager = new AccountManager(dataDir);
 	manager.init();
