@@ -47,8 +47,9 @@ contextBridge.exposeInMainWorld('aura', {
  	openMaFileDialog: () => ipcRenderer.invoke('dialog:openMafile'),
 
 	checkForUpdates: () => ipcRenderer.invoke('app:checkForUpdates'),
-	getVersion: () => ipcRenderer.invoke('app:getVersion'),
+	downloadUpdate: () => ipcRenderer.invoke('app:downloadUpdate'),
 	installUpdate: () => ipcRenderer.invoke('app:installUpdate'),
+	getVersion: () => ipcRenderer.invoke('app:getVersion'),
 	openExternalLink: (url) => ipcRenderer.invoke('app:openExternalLink', url),
 
  	on: (channel, cb) => {

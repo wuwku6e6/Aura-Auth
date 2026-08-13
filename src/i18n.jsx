@@ -240,11 +240,15 @@ const EN = {
 	'Тема': 'Theme',
 	'Русский': 'Russian',
 	'Английский': 'English',
+	'Обновление': 'Update',
 	'Версия': 'Version',
-	'Доступно обновление': 'Update available',
-	'Установить': 'Install',
-	'Обновить сейчас': 'Update now',
-	'Позже': 'Later'
+	'Проверить обновления': 'Check for updates',
+	'Проверка…': 'Checking…',
+	'Скачать и установить': 'Download and install',
+	'Скачивание…': 'Downloading…',
+	'Перезапустить и установить': 'Restart and install',
+	'Обновление не найдено': 'Update not found',
+	'Ошибка проверки обновлений': 'Update check error'
 };
 
 const I18nContext = createContext(null);

@@ -478,20 +478,34 @@ function setupIPC() {
 	});
 
 	// --- App info / auto-update ---
+	// Manual flow (triggered from Settings → "Проверить обновления"):
+	//   checkForUpdates  -> {available, version}
+	//   downloadUpdate   -> downloads + fires update-downloaded
+	//   installUpdate    -> quitAndInstall
 	ipcMain.handle('app:checkForUpdates', async () => {
 		if (!app.isPackaged) return { available: false, current: app.getVersion() };
-		const result = await autoUpdater.checkForUpdates();
-		return {
-			current: app.getVersion(),
-			available: !!result?.updateInfo?.version,
-			version: result?.updateInfo?.version,
-			notInstalled: !!result?.updateInfo?.version && result.updateInfo.version !== app.getVersion()
-		};
+		try {
+			const result = await autoUpdater.checkForUpdates();
+			const current = app.getVersion();
+			const version = result?.updateInfo?.version;
+			return {
+				current,
+				version,
+				available: !!version && version !== current
+			};
+		} catch (e) {
+			return { available: false, current: app.getVersion(), error: e.message };
+		}
 	});
-	ipcMain.handle('app:getVersion', () => app.getVersion());
+	ipcMain.handle('app:downloadUpdate', async () => {
+		if (!app.isPackaged) return { ok: false };
+		await autoUpdater.downloadUpdate();
+		return { ok: true };
+	});
 	ipcMain.handle('app:installUpdate', async () => {
 		await autoUpdater.quitAndInstall();
 	});
+	ipcMain.handle('app:getVersion', () => app.getVersion());
 	ipcMain.handle('app:openExternalLink', (event, url) => shell.openExternal(url));
 
 	ipcMain.handle('confirms:list', (event, name) => wrap(event, async () => manager.getConfirmations(name)));
@@ -565,7 +579,7 @@ function setupAutoUpdater() {
 	autoUpdater.autoDownload = false; // we prompt the user in the UI instead
 	autoUpdater.autoInstallOnAppQuit = false;
 
-	// Inform any open window so Settings can show an update banner.
+	// Inform any open window of update progress (manual check initiated from Settings).
 	autoUpdater.on('update-available', (info) => {
 		log.info(`Доступно обновление ${info.version}`);
 		broadcastAll('app:updateAvailable', { available: true, version: info.version, info });
@@ -584,46 +598,24 @@ function setupAutoUpdater() {
 		log.warn(`Ошибка авто-обновления: ${err.message}`);
 		broadcastAll('app:updateAvailable', { available: false, error: err.message });
 	});
-
-	// Background check on startup (silent — UI only reacts when window is open).
-	autoUpdater.checkForUpdatesAndNotify().catch((e) => {
-		log.warn(`Не удалось проверить обновления: ${e.message}`);
-	});
-}
-
-function migrateLegacyDataDir(newDataDir) {
-	if (!app.isPackaged) return; // only relevant for upgraded packaged installs
-	const legacy = path.join(app.getPath('userData'), 'maFiles');
-	// уже есть данные в новой папке — мигрировать не нужно
-	if (fs.existsSync(newDataDir) && fs.readdirSync(newDataDir).length > 0) return;
-	if (!fs.existsSync(legacy)) return;
-	try {
-		fs.mkdirSync(newDataDir, { recursive: true });
-		fs.cpSync(legacy, newDataDir, { recursive: true });
-		const log = getLogger('migrate');
-		log.info('Перенесены аккаунты из ' + legacy + ' в ' + newDataDir);
-	} catch (e) {
-		const log = getLogger('migrate');
-		log.warn('Не удалось мигрировать maFiles из ' + legacy + ': ' + e.message);
-	}
+	// Manual check only — no background polling on startup.
 }
 
 // Disable GPU acceleration: on secondary PCs / VMs / RDP the GPU process can
 // blank the window (process alive, no visible window).
 app.disableHardwareAcceleration();
 
-app.whenReady().then(() => {
-	dbgLog('ready');
-	applyPublicDns();
-	dbgLog('dns applied');
-	// Account data (maFiles, accounts.json, settings.json) lives next to the
-	// executable in packaged mode, or at the project root in dev mode — same as
-	// the classic Steam Desktop Authenticator.
-	// process.resourcesPath is <installDir>/resources in a packaged app, so
-	// path.join(process.resourcesPath, '..') == <installDir> (the app root).
-	// (app.getExecutablePath() is unreliable inside asar on some Electron builds,
-	// so use the always-available process.resourcesPath.)
-	let dataDir;
+	app.whenReady().then(() => {
+		dbgLog('ready');
+		applyPublicDns();
+		dbgLog('dns applied');
+		// Account data (maFiles, accounts.json, settings.json) lives next to the
+		// executable in packaged mode, or at the project root in dev mode — same as
+		// the classic Steam Desktop Authenticator. Users simply drop their `maFiles`
+		// folder (with *.maFile + accounts.json) into the app directory.
+		// process.resourcesPath = <installDir>/resources in a packaged app, so
+		// path.join(process.resourcesPath, '..') == <installDir> (app root).
+		let dataDir;
 	try {
 		dataDir = app.isPackaged
 			? path.join(process.resourcesPath, '..', 'maFiles')
@@ -632,10 +624,7 @@ app.whenReady().then(() => {
 		getLogger('app').warn('compute dataDir fallback: ' + e.message);
 		dataDir = path.join(app.getPath('userData'), 'maFiles');
 	}
-	// One-time migration: if the new location is empty, copy accounts/settings
-	// from the old %APPDATA% location so existing data isn't lost on upgrade.
-	migrateLegacyDataDir(dataDir);
-	fs.mkdirSync(dataDir, { recursive: true });
+		fs.mkdirSync(dataDir, { recursive: true });
 	manager = new AccountManager(dataDir);
 	manager.init();
 	dbgLog('manager init done, dataDir=' + dataDir);

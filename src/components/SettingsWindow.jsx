@@ -13,16 +13,28 @@ const SettingsWindow = () => {
 	const [language, setLanguage] = useState(lang);
 	const [theme, setTheme] = useState((document.documentElement.getAttribute('data-theme')) || 'aura');
 	const [version, setVersion] = useState('');
-	const [updateInfo, setUpdateInfo] = useState(null);
+	// update state: 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'unavailable' | 'error'
+	const [upState, setUpState] = useState('idle');
+	const [up, setUp] = useState(null); // { version }
 	const [progress, setProgress] = useState(0);
 
 	useEffect(() => {
 		let cancelled = false;
 		api.getVersion().then(v => { if (!cancelled) setVersion(v); });
-		api.checkForUpdates().then(r => { if (!cancelled) setUpdateInfo(r); });
-		const off = api.on('app:updateAvailable', (p) => { if (!cancelled) setUpdateInfo(p); });
-		const offProg = api.on('app:updateProgress', (p) => { if (!cancelled) setProgress(p.percent); });
-		return () => { cancelled = true; off(); offProg(); };
+		const offCheck = api.on('app:updateAvailable', (p) => {
+			if (cancelled) return;
+			if (p && p.available && p.version) {
+				setUp({ version: p.version });
+				if (p.downloaded) setUpState('downloaded');
+				else setUpState('available');
+			} else if (p && p.error) {
+				setUpState('error');
+			} else {
+				setUpState('unavailable');
+			}
+		});
+		const offProg = api.on('app:updateProgress', (p) => { if (!cancelled) setProgress(p.percent || 0); });
+		return () => { cancelled = true; offCheck(); offProg(); };
 	}, []);
 
 	const langLabel = (l) => (lang === 'en' ? l.labelEn : l.labelRu);
@@ -37,47 +49,56 @@ const SettingsWindow = () => {
 		api.setSettings({ theme: id });
 	};
 
-	const doUpdateNow = async () => {
-		if (updateInfo?.downloaded) {
-			await api.installUpdate();
-		} else if (updateInfo?.available) {
-			setUpdateInfo({ ...updateInfo, downloading: true });
+	const checkUpdates = async () => {
+		setUpState('checking'); setUp(null);
+		const r = await api.checkForUpdates();
+		if (r && r.version && r.version !== r.current) {
+			setUp({ version: r.version }); setUpState('available');
+		} else {
+			setUpState('unavailable');
+		}
+	};
+
+	const downloadAndInstall = async () => {
+		if (upState === 'available') {
+			setUpState('downloading');
+			await api.downloadUpdate();
+		} else if (upState === 'downloaded') {
 			await api.installUpdate();
 		}
 	};
-	const doUpdateLater = () => {
-		setUpdateInfo({ ...updateInfo, dismissed: true });
-	};
 
-	const showUpdateBanner = updateInfo && updateInfo.available && !updateInfo.dismissed;
+	const renderUpdate = () => {
+		switch (upState) {
+			case 'checking':
+				return <button className="update-btn update-btn_apply" disabled>{t('Проверка…')}</button>;
+			case 'available':
+				return (
+					<>
+						<span className="update-ver">{up && up.version}</span>
+						<button className="update-btn update-btn_apply" onClick={downloadAndInstall}>{t('Скачать и установить')}</button>
+					</>
+				);
+			case 'downloading':
+				return <button className="update-btn update-btn_apply" disabled>{t('Скачивание…')}{Math.round(progress)}%</button>;
+			case 'downloaded':
+				return <button className="update-btn update-btn_apply" onClick={downloadAndInstall}>{t('Перезапустить и установить')}</button>;
+			case 'unavailable':
+				return <span className="update-ver">{t('Обновление не найдено')}</span>;
+			case 'error':
+				return <span className="update-ver">{t('Ошибка проверки обновлений')}</span>;
+			default:
+				return (
+					<>
+						<span className="update-ver">{up && up.version ? 'v' + up.version : ''}</span>
+						<button className="update-btn update-btn_apply" onClick={checkUpdates}>{t('Проверить обновления')}</button>
+					</>
+				);
+		}
+	};
 
 	return (
 		<div className="settings-win">
-			{showUpdateBanner && (
-				<div className="update-banner">
-					<div className="update-banner_title">
-						{t('Доступно обновление')} {updateInfo.version}
-					</div>
-					{!updateInfo.downloading ? (
-						<>
-							{updateInfo.downloaded ? (
-								<button className="update-btn update-btn_apply" onClick={doUpdateNow}>
-									{t('Установить')}
-								</button>
-							) : (
-								<button className="update-btn update-btn_apply" onClick={doUpdateNow}>
-									{t('Обновить сейчас')}:{progress}%
-								</button>
-							)}
-							<button className="update-btn update-btn_later" onClick={doUpdateLater}>
-								{t('Позже')}
-							</button>
-						</>
-					) : (
-						<div className="update-progress">{Math.round(progress)}%</div>
-					)}
-				</div>
-			)}
 			<div className="settings-head">
 				<div className="settings-title">{t('Настройки')}</div>
 			</div>
@@ -108,6 +129,11 @@ const SettingsWindow = () => {
 							>{themeLabel(th.id)}</button>
 						))}
 					</div>
+				</div>
+
+				<div className="settings-field">
+					<div className="settings-field-label">{t('Обновление')}</div>
+					<div className="settings-update-row">{renderUpdate()}</div>
 				</div>
 
 				<div className="settings-field">
