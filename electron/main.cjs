@@ -616,9 +616,22 @@ app.whenReady().then(() => {
 	dbgLog('ready');
 	applyPublicDns();
 	dbgLog('dns applied');
-		const dataDir = app.isPackaged
-			? path.join(path.dirname(app.getExecutablePath()), 'maFiles')
+	// Account data (maFiles, accounts.json, settings.json) lives next to the
+	// executable in packaged mode, or at the project root in dev mode — same as
+	// the classic Steam Desktop Authenticator.
+	// process.resourcesPath is <installDir>/resources in a packaged app, so
+	// path.join(process.resourcesPath, '..') == <installDir> (the app root).
+	// (app.getExecutablePath() is unreliable inside asar on some Electron builds,
+	// so use the always-available process.resourcesPath.)
+	let dataDir;
+	try {
+		dataDir = app.isPackaged
+			? path.join(process.resourcesPath, '..', 'maFiles')
 			: path.join(__dirname, '..', 'maFiles');
+	} catch (e) {
+		getLogger('app').warn('compute dataDir fallback: ' + e.message);
+		dataDir = path.join(app.getPath('userData'), 'maFiles');
+	}
 	// One-time migration: if the new location is empty, copy accounts/settings
 	// from the old %APPDATA% location so existing data isn't lost on upgrade.
 	migrateLegacyDataDir(dataDir);
