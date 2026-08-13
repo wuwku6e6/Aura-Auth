@@ -126,6 +126,10 @@ function createWindow() {
 		return { action: 'deny' };
 	});
 
+	// BrowserWindow is hidden until explicitly shown — otherwise the process
+	// runs (visible in Task Manager) but the user sees nothing.
+	mainWindow.once('ready-to-show', () => mainWindow.show());
+
 	mainWindow.on('closed', () => { mainWindow = null; });
 	mainWindow.webContents.on('render-process-gone', (_e, details) => {
 		crashLog('render-process-gone (main): ' + JSON.stringify(details));
@@ -266,6 +270,7 @@ function openOfferWindow(name, offer) {
 		}
 	});
 	offerWindow.on('closed', () => { offerWindow = null; });
+	offerWindow.once('ready-to-show', () => offerWindow.show());
 	loadHash();
 }
 
@@ -291,6 +296,7 @@ function openSettingsWindow() {
 		}
 	});
 	settingsWindow.on('closed', () => { settingsWindow = null; });
+	settingsWindow.once('ready-to-show', () => settingsWindow.show());
 	if (isDev) {
 		settingsWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}/settings.html`);
 	} else {
@@ -323,6 +329,7 @@ function openCs2Window(name) {
 		cs2Window = null;
 		manager.stopCs2(name).catch(() => {});
 	});
+	cs2Window.once('ready-to-show', () => cs2Window.show());
 
 	const hash = `#name=${encodeURIComponent(name)}`;
 	if (isDev) {
@@ -354,6 +361,7 @@ function openInventoryWindow(name, appId, contextId) {
 		}
 	});
 	inventoryWindow.on('closed', () => { inventoryWindow = null; });
+	inventoryWindow.once('ready-to-show', () => inventoryWindow.show());
 
 	const hash = `#name=${encodeURIComponent(name)}&app=${appId}&ctx=${contextId}`;
 	if (isDev) {
