@@ -25,10 +25,10 @@ const LogPanel = forwardRef(function LogPanel({ logs, scrollToBottom, collapsed,
 			<div className="log-body" ref={ref}>
 				{logs.map(entry => (
 					<div className={`log-line ${entry.level}`} key={entry.id}>
-						<span className="log-icon">{levelIcon[entry.level] || '·'}</span>
+						<span className="log-icon">{levelIcon[entry.level] || '?'}</span>
 						<span className="log-time">{new Date(entry.ts).toLocaleTimeString()}</span>
-						<span className="log-scope">{entry.scope}</span>
-						<span className="log-msg">{entry.message}</span>
+						<span className="log-scope" title={entry.scope}>{entry.scope}</span>
+						<span className="log-msg" title={entry.message}>{entry.message}</span>
 					</div>
 				))}
 			</div>

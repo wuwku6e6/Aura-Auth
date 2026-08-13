@@ -497,8 +497,8 @@ body {
 .log-line { display: flex; gap: 8px; padding: 2px 0; line-height: 1.5; }
 .log-icon { width: 14px; flex-shrink: 0; }
 .log-time { color: var(--text-faint); flex-shrink: 0; }
-.log-scope { color: var(--accent); flex-shrink: 0; font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.log-msg { color: var(--text-dim); word-break: break-word; }
+.log-scope { color: var(--accent); flex-shrink: 0; font-weight: 600; overflow: visible; white-space: nowrap; }
+.log-msg { color: var(--text-dim); word-break: break-word; overflow-wrap: anywhere; }
 .log-line.success .log-icon, .log-line.success .log-msg { color: var(--green); }
 .log-line.warn .log-icon, .log-line.warn .log-msg { color: var(--amber); }
 .log-line.error .log-icon, .log-line.error .log-msg { color: var(--red); }

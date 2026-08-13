@@ -4,7 +4,7 @@ class Logger {
 	constructor() {
 		this.entries = [];
 		this.listeners = new Set();
-		this.max = 500;
+		this.max = 5000; // large buffer so early startup logs (DNS, updates) aren't dropped
 	}
 
 	_onChange() {
