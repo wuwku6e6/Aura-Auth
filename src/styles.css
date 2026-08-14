@@ -285,7 +285,7 @@ body {
 .play-title { font-size: 13px; font-weight: 700; color: var(--text-dim); }
 .play-chevron { font-size: 10px; color: var(--text-faint); transition: transform .15s; user-select: none; }
 .play-chevron.open { transform: rotate(180deg); }
-.play-state { font-size: 11px; font-family: var(--mono); color: var(--text-faint); }
+.play-state { font-size: 11px; font-family: var(--mono); color: var(--text-faint); white-space: normal; line-height: 1.3; max-width: 100%; }
 .play-state.on { color: var(--green); }
 .play-presets { display: flex; flex-wrap: wrap; gap: 8px; }
 .preset-chip {
@@ -790,10 +790,10 @@ body {
 }
 .settings-field { margin-bottom: 22px; }
 .settings-field-label { font-size: 13px; font-weight: 600; color: var(--text-dim); margin-bottom: 10px; letter-spacing: 0.3px; }
-.settings-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.settings-options { display: flex; flex-wrap: wrap; gap: 8px; }
 .settings-option {
 	border: 1px solid var(--border); background: var(--panel-2); color: var(--text);
-	border-radius: 10px; padding: 10px 16px; font-size: 13.5px; cursor: pointer;
+	border-radius: 9px; padding: 6px 13px; font-size: 12.5px; cursor: pointer;
 	transition: border-color .15s, background .15s, transform .05s;
 }
 .settings-option:hover { border-color: var(--accent); }
@@ -808,9 +808,40 @@ body {
 .settings-update-row { display: flex; align-items: center; gap: 14px; }
 .update-ver { font-size: 13px; color: var(--text-dim) }
 .settings-foot {
-	padding: 0 20px 16px; border-top: 1px solid var(--border-soft);
-	font-size: 12px; color: var(--text-dim); opacity: 0.6;
+	position: relative;
+	padding: 12px 20px 14px; border-top: 1px solid var(--border-soft);
+	font-size: 12px; color: var(--text-dim);
+	display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
+.settings-foot-ver { opacity: .65; }
+
+/* ── About / author dropdown ── */
+.about-wrap { position: relative; }
+.about-toggle {
+	background: none; border: none; color: var(--accent); cursor: pointer;
+	font-size: 12px; padding: 2px 4px; border-radius: 6px; opacity: .85;
+	transition: opacity .15s, background .15s;
+}
+.about-toggle:hover { opacity: 1; background: var(--glass); }
+.about-caret { display: inline-block; transition: transform .2s var(--ease); font-size: 9px; }
+.about-caret.open { transform: rotate(180deg); }
+.about-pop {
+	position: absolute; right: 0; bottom: calc(100% + 10px);
+	width: 280px; background: var(--bg-elev); border: 1px solid var(--border);
+	border-radius: 14px; padding: 16px; box-shadow: var(--shadow-lg); z-index: 20;
+	animation: card-in .2s var(--ease) both;
+}
+.about-pop::after {
+	content: ""; position: absolute; right: 18px; bottom: -7px;
+	width: 12px; height: 12px; background: var(--bg-elev);
+	border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+	transform: rotate(45deg);
+}
+.about-title { font-size: 13px; font-weight: 800; margin-bottom: 12px; color: var(--text); }
+.about-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 7px; }
+.about-row span { color: var(--text-faint); }
+.about-row b { color: var(--text); text-align: right; }
+.about-bio { font-size: 12px; color: var(--text-dim); line-height: 1.55; margin-top: 10px; }
 
 /* ─── Update banner ───────────────────────────────────────────── */
 .update-banner {

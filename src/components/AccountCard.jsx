@@ -56,7 +56,9 @@ export default function AccountCard({
 	const playLabel = isPlaying && play.games && play.games.length
 		? t('Играет: {games}', { games: play.games.map(g => appName(g)).join(', ') })
 		: t('Играет');
-	const playStateLabel = isPlaying ? t('Играет') : t('Не играет');
+	const playStateLabel = isPlaying && play.games && play.games.length
+		? t('Играет: {games}', { games: play.games.map(g => appName(g)).join(', ') })
+		: (isPlaying ? t('Играет') : t('Не играет'));
 	const displayStatus = isPlaying ? playLabel : statusLabel;
 	const displayState = isPlaying ? 'playing' : statusState;
 

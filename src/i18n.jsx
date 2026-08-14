@@ -247,7 +247,13 @@ const EN = {
 	'Скачивание…': 'Downloading…',
 	'Перезапустить и установить': 'Restart and install',
 	'Обновление не найдено': 'Update not found',
-	'Ошибка проверки обновлений': 'Update check error'
+	'Ошибка проверки обновлений': 'Update check error',
+	'By wuwku6a6': 'By wuwku6a6',
+	'Об авторе': 'About the author',
+	'Автор': 'Author',
+	'Контакты': 'Contact',
+	'Описание': 'Description',
+	'Здесь вы можете добавить информацию о себе, контакты и ссылки.': 'Here you can add your own info, contacts and links.'
 };
 
 const I18nContext = createContext(null);

@@ -17,6 +17,7 @@ const SettingsWindow = () => {
 	const [upState, setUpState] = useState('idle');
 	const [up, setUp] = useState(null); // { version }
 	const [progress, setProgress] = useState(0);
+	const [aboutOpen, setAboutOpen] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -136,14 +137,32 @@ const SettingsWindow = () => {
 					<div className="settings-update-row">{renderUpdate()}</div>
 				</div>
 
-				<div className="settings-field">
-					<div className="settings-field-label">{t('Версия')}</div>
-					<div className="settings-field-value">{version || '…'}</div>
-				</div>
+			<div className="settings-field">
+				<div className="settings-field-label">{t('Версия')}</div>
+				<div className="settings-field-value">{version || '…'}</div>
 			</div>
-			<div className="settings-foot">{version ? `Aura Auth v${version}` : ''}</div>
 		</div>
-	);
+		<div className="settings-foot">
+			<span className="settings-foot-ver">{version ? `Aura Auth v${version}` : ''}</span>
+			<div className="about-wrap">
+				<button
+					type="button"
+					className="about-toggle"
+					onClick={() => setAboutOpen(o => !o)}
+					title={t('Об авторе')}
+				>{t('By wuwku6a6')} <span className={`about-caret ${aboutOpen ? 'open' : ''}`}>▾</span></button>
+				{aboutOpen && (
+					<div className="about-pop">
+						<div className="about-title">{t('Об авторе')}</div>
+						<div className="about-row"><span>{t('Автор')}</span><b>wuwku6a6</b></div>
+						<div className="about-row"><span>{t('Контакты')}</span><b>—</b></div>
+						<div className="about-bio">{t('Здесь вы можете добавить информацию о себе, контакты и ссылки.')}</div>
+					</div>
+				)}
+			</div>
+		</div>
+	</div>
+);
 };
 
 export default SettingsWindow;
