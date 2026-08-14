@@ -386,11 +386,7 @@ export default function Cs2TradeWindow() {
 								onMouseMove={moveTip}
 								onMouseLeave={hideTip}
 							>
-								<div className="cs2-ev-tile-icon">
-									{c && c.exteriorShort && <span className="cs2-ev-ext-badge cs2-ev-ext-badge-tile" data-ex={c.exteriorShort} title={c.exterior + (c.outFloat != null ? ` · float ${c.outFloat}` : '')}>{c.exteriorShort}</span>}
-									<span className="cs2-ev-icon-ph" data-r={c && typeof c.rarity === 'number' ? c.rarity : ''}>?</span>
-									{c && c.icon && <img className="cs2-ev-icon" src={c.icon} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = 'none'; }} />}
-								</div>
+								<EvTileIcon c={c} />
 								<div className="cs2-ev-tile-name" title={c && c.name ? c.name : ''}>{c && c.name ? c.name : '—'}</div>
 								<div className="cs2-ev-tile-meta">
 									<span className="cs2-ev-tile-coll" title={c.collections && c.collections.join(', ')}>{c.collections && c.collections.length ? c.collections[0] : '—'}</span>
@@ -438,6 +434,33 @@ export default function Cs2TradeWindow() {
 					<div className="cs2-ev-tip-row"><span>{t('Шанс:')}</span><b>{tip.c.percent != null ? tip.c.percent.toFixed(2) + ' %' : '—'}</b></div>
 					<div className="cs2-ev-tip-row"><span>{t('Коллекция:')}</span><b>{tip.c.collections && tip.c.collections.length ? tip.c.collections.join(', ') : '—'}</b></div>
 				</div>
+			)}
+		</div>
+	);
+}
+
+function EvTileIcon({ c }) {
+	const [loaded, setLoaded] = useState(false);
+	const rarity = c && typeof c.rarity === 'number' ? c.rarity : '';
+	return (
+		<div className="cs2-ev-tile-icon">
+			{c?.exteriorShort && (
+				<span className="cs2-ev-ext-badge cs2-ev-ext-badge-tile" data-ex={c.exteriorShort} title={c.exterior + (c.outFloat != null ? ` · float ${c.outFloat}` : '')}>{c.exteriorShort}</span>
+			)}
+			{c?.icon ? (
+				<>
+					{!loaded && <span className="cs2-ev-icon-ph" data-r={rarity}>?</span>}
+					<img
+						className="cs2-ev-icon"
+						src={c.icon}
+						alt=""
+						loading="lazy"
+						onLoad={() => setLoaded(true)}
+						onError={e => { setLoaded(false); e.currentTarget.style.display = 'none'; }}
+					/>
+				</>
+			) : (
+				<span className="cs2-ev-icon-ph" data-r={rarity}>?</span>
 			)}
 		</div>
 	);

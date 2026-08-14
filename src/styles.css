@@ -141,7 +141,7 @@ body {
 .icon-btn:hover { color: var(--text); border-color: var(--accent); transform: rotate(35deg); }
 .icon-btn .gear { display: inline-block; }
 
-.account-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; min-height: 0; padding-right: 2px; }
+.account-list { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 4px; min-height: 0; padding-right: 2px; }
 .account-item {
 	display: flex; align-items: center; gap: 9px;
 	padding: 10px 12px; width: 100%;

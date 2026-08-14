@@ -25,7 +25,8 @@ export default function AccountCard({
 	onAutoPlay,
 	onRename,
 	onRemove,
-	onLogout
+	onLogout,
+	onLoginHandled
 }) {
 	const { t } = useI18n();
 	const [pwd, setPwd] = useState('');
@@ -189,6 +190,7 @@ export default function AccountCard({
 			}
 			setLoginNotice(t('Вход подтверждён') + (approved > 1 ? ` (${approved})` : ''));
 			setTimeout(() => setLoginNotice(''), 4000);
+			if (onLoginHandled) onLoginHandled(account.name);
 			window.aura.getConfirmations(account.name).catch(() => {});
 		} finally {
 			setApprovingLogin(false);

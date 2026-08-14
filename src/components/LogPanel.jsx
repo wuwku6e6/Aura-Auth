@@ -1,9 +1,9 @@
 import React, { forwardRef, useEffect } from 'react';
 import { useI18n } from '../i18n.jsx';
 
-const LogPanel = forwardRef(function LogPanel({ logs, scrollToBottom, collapsed, onToggle }, ref) {
+	const LogPanel = forwardRef(function LogPanel({ logs, scrollToBottom, collapsed, onToggle }, ref) {
 	const { t } = useI18n();
-	useEffect(() => { scrollToBottom(); }, [logs.length]);
+	useEffect(() => { if (ref.current) ref.current.scrollTop = 0; }, [logs.length]);
 
 	const levelIcon = {
 		info: 'ℹ',
@@ -11,6 +11,8 @@ const LogPanel = forwardRef(function LogPanel({ logs, scrollToBottom, collapsed,
 		error: '✕',
 		success: '✓'
 	};
+
+	const ordered = [...logs].reverse();
 
 	return (
 		<div className="log-panel">
@@ -23,7 +25,7 @@ const LogPanel = forwardRef(function LogPanel({ logs, scrollToBottom, collapsed,
 			</div>
 			{!collapsed && (
 			<div className="log-body" ref={ref}>
-				{logs.map(entry => (
+				{ordered.map(entry => (
 					<div className={`log-line ${entry.level}`} key={entry.id}>
 						<span className="log-icon">{levelIcon[entry.level] || '?'}</span>
 						<span className="log-time">{new Date(entry.ts).toLocaleTimeString()}</span>

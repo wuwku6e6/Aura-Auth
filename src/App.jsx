@@ -138,12 +138,19 @@ export default function App() {
 	const respondLoginRequest = async (clientId, version, account, approve) => {
 		try {
 			const { ok, error } = await api.respondLogin(account, clientId, version, approve);
-			if (!ok) throw new Error(error);
+			if (!ok && !/29|уже|already|confirmed|подтвержд/i.test(error || '')) throw new Error(error);
 		} catch (e) {
-			alert(e.message || t('Не удалось подтвердить вход'));
+			const msg = e.message || '';
+			if (!/29|уже|already|confirmed|подтвержд/i.test(msg)) {
+				alert(msg || t('Не удалось подтвердить вход'));
+			}
 		} finally {
 			setLoginRequests(prev => prev.filter(r => !(r.account === account && r.clientId === clientId)));
 		}
+	};
+
+	const clearLoginForAccount = (name) => {
+		setLoginRequests(prev => prev.filter(r => r.account !== name));
 	};
 
 	if (loading) {
@@ -270,6 +277,7 @@ export default function App() {
 							setAccounts(prev => prev.filter(a => a.name !== selected));
 							setSelected(null);
 						})}
+						onLoginHandled={clearLoginForAccount}
 						onLogout={() => api.logout(selected).then(() => {
 							setAccounts(prev => prev.map(a => a.name === selected ? { ...a, status: { state: 'offline', label: t('Не в сети') } } : a));
 						})}

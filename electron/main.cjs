@@ -156,6 +156,7 @@ function broadcastAll(channel, payload) {
 // and broadcast one-tap approval requests.
 const LOGIN_POLL_MS = 10000;
 const knownLoginRequests = new Map(); // key `${account}::${clientId}` -> timestamp
+const respondedLoginRequests = new Map(); // key -> timestamp; suppress re-broadcast after a response
 const pendingLoginPoll = { timer: null, running: false };
 
 function pendingLoginKey(account, clientId) {
@@ -165,6 +166,8 @@ function pendingLoginKey(account, clientId) {
 function shouldBroadcastPendingLogin(account, clientId, cooldownMs = 60000) {
 	const now = Date.now();
 	const key = pendingLoginKey(account, clientId);
+	// Don't re-broadcast a request we've just answered (Steam may still list it briefly).
+	if (respondedLoginRequests.has(key) && now - respondedLoginRequests.get(key) < 120000) return false;
 	const last = knownLoginRequests.get(key);
 	if (last !== undefined && now - last < cooldownMs) return false;
 	knownLoginRequests.set(key, now);
@@ -514,7 +517,19 @@ function setupIPC() {
 
 	// Подтверждение входа на новом устройстве (device-confirmation через GetAuthSessionsForAccount)
 	ipcMain.handle('login:list', (event) => wrap(event, async () => scanPendingLoginsOnce()));
-	ipcMain.handle('login:respond', (event, { name, clientId, version, approve }) => wrap(event, async () => manager.respondLoginRequest(clientId, version, approve, name)));
+	ipcMain.handle('login:respond', (event, { name, clientId, version, approve }) => wrap(event, async () => {
+		try {
+			const r = await manager.respondLoginRequest(clientId, version, approve, name);
+			respondedLoginRequests.set(pendingLoginKey(name, clientId), Date.now());
+			return r;
+		} catch (e) {
+			// Already-handled requests (e.g. WebAPI error 29) should not be re-broadcast either.
+			if (/29|уже|already|confirmed|подтвержд/i.test(e.message || '')) {
+				respondedLoginRequests.set(pendingLoginKey(name, clientId), Date.now());
+			}
+			throw e;
+		}
+	}));
 
 	ipcMain.handle('inventory:get', (event, { name, appId, contextId }) => wrap(event, async () => manager.getInventory(name, appId, contextId)));
 

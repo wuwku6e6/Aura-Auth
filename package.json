@@ -1,6 +1,6 @@
 {
   "name": "aura-auth",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Aura Auth - Steam Desktop Authenticator с авто-подтверждением и массовой отправкой трейдов",
   "author": "Aura Auth",
   "repository": {
