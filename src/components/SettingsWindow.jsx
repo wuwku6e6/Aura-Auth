@@ -18,6 +18,18 @@ const SettingsWindow = () => {
 	const [up, setUp] = useState(null); // { version }
 	const [progress, setProgress] = useState(0);
 	const [aboutOpen, setAboutOpen] = useState(false);
+	const [copied, setCopied] = useState('');
+
+	const openLink = (url) => {
+		if (api.openExternalLink) api.openExternalLink(url);
+		else window.open(url, '_blank', 'noopener');
+	};
+	const copyText = (text, key) => {
+		navigator.clipboard.writeText(text).then(() => {
+			setCopied(key);
+			setTimeout(() => setCopied(''), 1400);
+		}).catch(() => {});
+	};
 
 	useEffect(() => {
 		let cancelled = false;
@@ -155,8 +167,25 @@ const SettingsWindow = () => {
 					<div className="about-pop">
 						<div className="about-title">{t('Об авторе')}</div>
 						<div className="about-row"><span>{t('Автор')}</span><b>wuwku6a6</b></div>
-						<div className="about-row"><span>{t('Контакты')}</span><b>—</b></div>
-						<div className="about-bio">{t('Здесь вы можете добавить информацию о себе, контакты и ссылки.')}</div>
+
+						<div className="about-sub-title">{t('Контакты')}</div>
+						<a
+							className="about-link"
+							href="https://github.com/wuwku6a6"
+							onClick={e => { e.preventDefault(); openLink('https://github.com/wuwku6a6'); }}
+						>GitHub ↗ github.com/wuwku6a6</a>
+
+						<div className="about-sub-title">{t('Поддержать разработчика')}</div>
+						<button type="button" className="about-copy" onClick={() => copyText('UQBCR6MZgO44vWzlqQpyaaJnCo9SAIsgTSUB8tuVqdXs8Ma1', 'gram')}>
+							<span className="about-copy-label">GRAM</span>
+							<span className="about-copy-val">UQBCR6MZgO44vWzlqQpyaaJnCo9SAIsgTSUB8tuVqdXs8Ma1</span>
+							<span className="about-copy-state">{copied === 'gram' ? t('Скопировано ✓') : t('Копировать')}</span>
+						</button>
+						<button type="button" className="about-copy" onClick={() => copyText('0x6d6F06b4eeF5b35e9d0C56e540DcCb3860381830', 'evm')}>
+							<span className="about-copy-label">EVM</span>
+							<span className="about-copy-val">0x6d6F06b4eeF5b35e9d0C56e540DcCb3860381830</span>
+							<span className="about-copy-state">{copied === 'evm' ? t('Скопировано ✓') : t('Копировать')}</span>
+						</button>
 					</div>
 				)}
 			</div>

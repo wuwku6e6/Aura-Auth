@@ -253,7 +253,11 @@ const EN = {
 	'Автор': 'Author',
 	'Контакты': 'Contact',
 	'Описание': 'Description',
-	'Здесь вы можете добавить информацию о себе, контакты и ссылки.': 'Here you can add your own info, contacts and links.'
+	'Здесь вы можете добавить информацию о себе, контакты и ссылки.': 'Here you can add your own info, contacts and links.',
+	'GitHub': 'GitHub',
+	'Поддержать разработчика': 'Support the developer',
+	'Скопировать': 'Copy',
+	'Скопировано ✓': 'Copied ✓'
 };
 
 const I18nContext = createContext(null);
