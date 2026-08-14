@@ -6,3 +6,6 @@ maFiles/
 *.log
 .DS_Store
 Thumbs.db
+
+# NSIS test artifacts
+build/.installer-test-stub.exe
