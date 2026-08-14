@@ -444,9 +444,6 @@ function EvTileIcon({ c }) {
 	const rarity = c && typeof c.rarity === 'number' ? c.rarity : '';
 	return (
 		<div className="cs2-ev-tile-icon">
-			{c?.exteriorShort && (
-				<span className="cs2-ev-ext-badge cs2-ev-ext-badge-tile" data-ex={c.exteriorShort} title={c.exterior + (c.outFloat != null ? ` · float ${c.outFloat}` : '')}>{c.exteriorShort}</span>
-			)}
 			{c?.icon ? (
 				<>
 					{!loaded && <span className="cs2-ev-icon-ph" data-r={rarity}>?</span>}
