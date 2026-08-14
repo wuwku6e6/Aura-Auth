@@ -16,6 +16,14 @@
 	--red: #e74c3c;
 	--rad: 14px;
 	--mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+
+	/* ── Polish tokens ── */
+	--shadow-sm: 0 1px 2px rgba(0,0,0,.30);
+	--shadow-md: 0 8px 24px rgba(0,0,0,.38);
+	--shadow-lg: 0 22px 56px rgba(0,0,0,.46);
+	--glass: rgba(255,255,255,.04);
+	--ring: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent);
+	--ease: cubic-bezier(.4, 0, .2, 1);
 }
 
 /* ─── Theme: Полночь (Midnight) — dark violet ───────────── */
@@ -63,12 +71,17 @@ html, body, #root { height: 100%; }
 body {
 	font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 	background:
-		radial-gradient(1200px 600px at 80% -10%, rgba(123, 92, 255, 0.12), transparent 60%),
-		radial-gradient(900px 500px at 10% 110%, rgba(79, 140, 255, 0.12), transparent 60%),
+		radial-gradient(1100px 620px at 82% -12%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 60%),
+		radial-gradient(900px 520px at 8% 112%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%),
+		radial-gradient(1400px 900px at 50% 50%, transparent 55%, rgba(0,0,0,.35)),
 		var(--bg);
+	background-attachment: fixed;
 	color: var(--text);
 	overflow: hidden;
 	user-select: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 /* Scrollbars */
@@ -816,3 +829,147 @@ body {
 .update-btn_later { background: transparent; color: var(--text-dim); }
 .update-btn_later:hover { color: var(--text); }
 .update-progress { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+
+/* ════════════════════════ Design polish ════════════════════════ */
+
+/* ── Entrance animation ── */
+@keyframes card-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.card-wrap { animation: card-in .35s var(--ease) both; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.content { animation: fade-in .3s var(--ease) both; }
+
+/* ── Scrollbar (refined) ── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-faint) 55%, transparent); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 65%, transparent); background-clip: padding-box; }
+
+/* ── Global focus ring (accessibility + polish) ── */
+.btn:focus-visible,
+.input:focus-visible,
+.select:focus-visible,
+.icon-btn:focus-visible,
+.tab:focus-visible,
+.gear:focus-visible,
+.modal-close:focus-visible,
+.account-item:focus-visible,
+.preset-chip:focus-visible {
+	outline: none;
+	box-shadow: var(--ring);
+}
+
+/* ── Sidebar depth + active indicator ── */
+.sidebar { box-shadow: 1px 0 0 var(--border-soft), var(--shadow-md); }
+.sidebar-search input {
+	box-shadow: var(--shadow-sm);
+	transition: border-color .15s var(--ease), box-shadow .15s var(--ease);
+}
+.sidebar-search input:focus { box-shadow: var(--ring); }
+.brand-logo { background: var(--accent-grad); box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 45%, transparent); }
+.brand-name { letter-spacing: .4px; }
+
+.account-item { position: relative; transition: background .15s var(--ease), transform .15s var(--ease), color .15s var(--ease); }
+.account-item:hover { transform: translateX(3px); }
+.account-item.active { background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--border), var(--shadow-sm); }
+.account-item.active::before {
+	content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px;
+	border-radius: 3px; background: var(--accent-grad);
+	box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.account-item.add:hover { transform: translateX(3px); }
+
+.mini-chip {
+	background: var(--glass); border: 1px solid var(--border-soft); border-radius: 7px;
+	padding: 1px 7px; font-weight: 700;
+}
+.mini-chip.playing { color: var(--cyan, #5dade2); border-color: color-mix(in srgb, var(--cyan, #5dade2) 40%, transparent); }
+.mini-chip.offers { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); background: color-mix(in srgb, var(--green) 10%, transparent); }
+.mini-chip.warns { color: #1a1205; background: var(--amber); border-color: transparent; }
+.mini-chip { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+
+.status-dot { box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent); }
+.status-dot.online { box-shadow: 0 0 10px var(--green); }
+
+/* ── Avatar + header depth ── */
+.avatar { box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 40%, transparent); }
+.account-title { letter-spacing: .2px; }
+.rename-btn { transition: color .15s var(--ease), background .15s var(--ease), transform .15s var(--ease); }
+.rename-btn:hover { transform: scale(1.08); }
+
+.status-badge { transition: all .2s var(--ease); }
+
+/* ── Guard code (glow + pop) ── */
+.guard-code {
+	box-shadow: var(--shadow-md), inset 0 0 0 1px color-mix(in srgb, var(--green) 28%, transparent);
+	background: color-mix(in srgb, var(--green) 7%, var(--panel));
+	transition: border-color .15s var(--ease), background .15s var(--ease), transform .08s var(--ease), box-shadow .15s var(--ease);
+}
+.guard-code:hover { box-shadow: var(--shadow-md), inset 0 0 0 1px color-mix(in srgb, var(--green) 45%, transparent); }
+.guard-code:active { transform: scale(.97); }
+.guard-value { text-shadow: 0 0 18px color-mix(in srgb, var(--green) 60%, transparent); letter-spacing: 3px; }
+
+/* ── Toggles (glassy depth) ── */
+.toggle { box-shadow: var(--shadow-sm); transition: border-color .15s var(--ease), background .15s var(--ease), transform .12s var(--ease); }
+.toggle:hover { transform: translateY(-1px); }
+.toggle.on { box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
+.toggle-track { box-shadow: inset 0 1px 3px rgba(0,0,0,.45); }
+.toggle-thumb { box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+
+/* ── Play section ── */
+.play-section { box-shadow: var(--shadow-sm); transition: border-color .15s var(--ease), box-shadow .15s var(--ease); }
+.play-header { transition: color .15s var(--ease); }
+.play-header:hover { color: var(--text); }
+.preset-chip { box-shadow: var(--shadow-sm); transition: all .15s var(--ease); }
+.preset-chip:hover { transform: translateY(-1px); }
+
+/* ── Tabs ── */
+.tab { transition: all .2s var(--ease); }
+.tab.active { box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 32%, transparent); }
+.tabs-badge { font-weight: 700; }
+
+/* ── Offer / confirm rows (lift on hover) ── */
+.offer-row, .conf-row { box-shadow: var(--shadow-sm); transition: border-color .15s var(--ease), box-shadow .15s var(--ease), transform .12s var(--ease); }
+.offer-row.clickable:hover, .conf-row:hover { transform: translateX(4px); border-color: var(--accent); box-shadow: var(--shadow-md); }
+.offer-row.active { box-shadow: var(--shadow-sm), inset 0 0 0 1px color-mix(in srgb, var(--green) 30%, transparent); }
+.state-pill, .offer-ext-badge { transition: all .15s var(--ease); }
+
+/* ── Buttons (depth + lift) ── */
+.btn { box-shadow: var(--shadow-sm); transition: all .15s var(--ease); }
+.btn:hover { transform: translateY(-1px); filter: brightness(1.08); border-color: var(--accent); }
+.btn:active { transform: translateY(0); filter: brightness(.96); }
+.btn.primary { box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 38%, transparent); }
+.btn.primary:hover { box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 48%, transparent); }
+.btn.success { box-shadow: 0 6px 18px color-mix(in srgb, var(--green) 30%, transparent); }
+.btn.danger { box-shadow: 0 6px 18px color-mix(in srgb, var(--red) 26%, transparent); }
+
+/* ── Inputs / selects ── */
+.input, .select { box-shadow: var(--shadow-sm); transition: border-color .15s var(--ease), box-shadow .15s var(--ease); }
+.input:focus, .select:focus { box-shadow: var(--ring); }
+
+/* ── Mass panel / modals depth ── */
+.mass-panel { box-shadow: var(--shadow-sm); }
+.modal { box-shadow: 0 40px 100px rgba(0,0,0,.6); }
+.modal-backdrop { background: rgba(4,6,10,.62); }
+
+/* ── Login request card (already glowing — add lift) ── */
+.login-request-card:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(79,140,255,.25), 0 16px 40px rgba(0,0,0,.35); }
+
+/* ── Empty state ── */
+.empty-icon { text-shadow: 0 0 30px color-mix(in srgb, var(--accent) 50%, transparent); filter: drop-shadow(0 6px 18px rgba(0,0,0,.4)); }
+.empty-title { letter-spacing: .3px; }
+
+/* ── Boot logo ── */
+.boot-logo { box-shadow: 0 16px 48px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* ── Settings option lift ── */
+.settings-option { box-shadow: var(--shadow-sm); transition: border-color .15s var(--ease), background .15s var(--ease), transform .08s var(--ease); }
+.settings-option:hover { transform: translateY(-1px); }
+.settings-option.sel { box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 36%, transparent); }
+
+/* ── Inventory / CS2 cards (lift) ── */
+.inv-card { transition: all .12s var(--ease); }
+.inv-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+	* { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}

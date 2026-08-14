@@ -40,7 +40,6 @@ const EN = {
 	'Код входа': 'Login code',
 	'Скопировано ✓': 'Copied ✓',
 	'Код Steam Guard, обновится через {n}с. Нажмите, чтобы скопировать': 'Steam Guard code, refreshes in {n}s. Click to copy',
-	'Проверка…': 'Checking…',
 	'Подтвердить вход': 'Confirm login',
 	'Выйти': 'Log out',
 	'аватар': 'avatar',
