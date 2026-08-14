@@ -1,6 +1,6 @@
 {
   "name": "aura-auth",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Aura Auth - Steam Desktop Authenticator с авто-подтверждением и массовой отправкой трейдов",
   "author": "Aura Auth",
   "repository": {
@@ -64,7 +64,8 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
     },
     "publish": [
       {
