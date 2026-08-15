@@ -5,6 +5,7 @@ const http = require('http');
 const https = require('https');
 const zlib = require('zlib');
 const { EventEmitter } = require('events');
+const { normalizeProxy } = require('./proxy.cjs');
 const { LoginSession, LoginApprover, EAuthTokenPlatformType, EAuthSessionGuardType, ESessionPersistence } = require('steam-session');
 const SteamTotp = require('steam-totp');
 const SteamCommunity = require('steamcommunity');
@@ -77,6 +78,9 @@ class SteamAccount {
 		this._confirmBackoff = null;
 		this.confirmEnabled = !!record.autoConfirm;
 		this.acceptEnabled = !!record.autoAccept;
+		// Прокси для всех Steam‑соединений аккаунта (socks5://, socks4://, http://, https://).
+		// Применяется к LoginSession, SteamUser (play‑client) и SteamCommunity.
+		this.proxy = (record.proxy || '').trim();
 		this.polling = false;
 		this.connected = false;
 
@@ -105,6 +109,35 @@ class SteamAccount {
 		this._lastConfTs = {};
 		this._offersRefreshing = false;
 		this._offersRefreshTimer = null;
+	}
+
+	// ─── Proxy helpers ───────────────────────────────────────────────────
+
+	// steamuser + steam-session принимают строковый SOCKS/HTTP(S)‑прокси.
+	// Возвращаем одну опцию (они взаимно эксклюзивны): socksProxy | httpProxy.
+	_proxySteamOpts() {
+		const p = normalizeProxy(this.proxy);
+		if (!p) return {};
+		if (p.startsWith('socks')) return { socksProxy: p };
+		return { httpProxy: p };
+	}
+
+	// steamcommunity построен на `request`; чтобы проксировать его, передаём
+	// заранее настроенный экземпляр request (proxy=HTTP CONNECT / agent=SOCKS).
+	_proxyCommunityOpts() {
+		const p = normalizeProxy(this.proxy);
+		if (!p) return {};
+		try {
+			const Request = require('request');
+			if (p.startsWith('socks')) {
+				const SocksProxyAgent = require('socks-proxy-agent').SocksProxyAgent;
+				return { request: Request.defaults({ agent: new SocksProxyAgent(p) }) };
+			}
+			return { request: Request.defaults({ proxy: p }) };
+		} catch (e) {
+			this.log.warn(this.accountName, `Не удалось инициализировать прокси для SteamCommunity (${e.message})`);
+			return {};
+		}
 	}
 
 	// ─── Lifecycle ────────────────────────────────────────────────────────
@@ -199,7 +232,7 @@ class SteamAccount {
 
 	async _loginWithRefreshToken() {
 		this.log.info(this.accountName, 'Вход через сохранённый refresh-токен');
-		const session = new LoginSession(EAuthTokenPlatformType.MobileApp);
+		const session = new LoginSession(EAuthTokenPlatformType.MobileApp, this._proxySteamOpts());
 		session.refreshToken = this.record.refreshToken;
 		const cookies = await session.getWebCookies();
 		this.session = session;
@@ -216,7 +249,7 @@ class SteamAccount {
 	}
 
 	async _loginWithCredentials(password, guardCode) {
-		const session = new LoginSession(EAuthTokenPlatformType.MobileApp);
+		const session = new LoginSession(EAuthTokenPlatformType.MobileApp, this._proxySteamOpts());
 		this._guardCallbacks.clear();
 
 		// We pre-generate the 2FA code from shared_secret when available.
@@ -352,7 +385,7 @@ class SteamAccount {
 			this._save();
 		}
 
-		const community = new SteamCommunity();
+		const community = new SteamCommunity(this._proxyCommunityOpts());
 		community.setCookies(cookies);
 
 		const manager = new TradeOfferManager({
@@ -394,7 +427,7 @@ class SteamAccount {
 			const SteamID = require('steamid');
 			const sid = new SteamID(this.record.steamID64);
 			const avatar = await new Promise((resolve, reject) => {
-				const community = new SteamCommunity();
+				const community = new SteamCommunity(this._proxyCommunityOpts());
 				community.getSteamUser(sid, (err, user) => {
 					if (err) return reject(err);
 					resolve(user && user.getAvatarURL ? user.getAvatarURL('full') : null);
@@ -683,7 +716,7 @@ class SteamAccount {
 		if (!this.record.refreshToken) {
 			throw new Error('Нет MobileApp access token / refresh-токена — перелогиньтесь');
 		}
-		const session = new LoginSession(EAuthTokenPlatformType.MobileApp);
+		const session = new LoginSession(EAuthTokenPlatformType.MobileApp, this._proxySteamOpts());
 		session.refreshToken = this.record.refreshToken;
 		await session.refreshAccessToken();
 		if (!session.accessToken) throw new Error('Не удалось обновить access token');
@@ -768,7 +801,8 @@ class SteamAccount {
 		if (this._playRetryTimer) { clearTimeout(this._playRetryTimer); this._playRetryTimer = null; }
 		const client = new SteamUser({
 			enablePicsCache: false,
-			autoRelogin: false
+			autoRelogin: false,
+			...this._proxySteamOpts()
 		});
 		this.playClient = client;
 		this.playStatus = { state: 'connecting', games, label: 'Подключение к Steam…' };
@@ -1543,7 +1577,7 @@ class SteamAccount {
 		if (!this.record.password) {
 			throw new Error('Для «игры» нужен сохранённый пароль — включите «запомнить пароль» при входе');
 		}
-		const session = new LoginSession(EAuthTokenPlatformType.SteamClient);
+		const session = new LoginSession(EAuthTokenPlatformType.SteamClient, this._proxySteamOpts());
 		const code = this.record.sharedSecret ? SteamTotp.generateAuthCode(this.record.sharedSecret) : undefined;
 
 		let result;
@@ -1755,7 +1789,7 @@ class SteamAccount {
 	// (like sending trade offers -> error 15) due to a stale/expired sessionid.
 	async _refreshWebSession() {
 		if (!this.session && this.record.refreshToken) {
-			const session = new LoginSession(EAuthTokenPlatformType.MobileApp);
+			const session = new LoginSession(EAuthTokenPlatformType.MobileApp, this._proxySteamOpts());
 			session.refreshToken = this.record.refreshToken;
 			this.session = session;
 		}
@@ -1929,6 +1963,7 @@ class SteamAccount {
 			status: this.status || { state: 'offline', label: 'Не в сети' },
 			autoConfirm: this.confirmEnabled,
 			autoAccept: this.acceptEnabled,
+			proxy: this.proxy || null,
 			hasSecrets: !!(this.record.sharedSecret && this.record.identitySecret),
 			hasRefreshToken: !!this.record.refreshToken,
 			play: {
@@ -1969,7 +2004,8 @@ class SteamAccount {
 			lastLogin: this.record.lastLogin || null,
 			playGames: this.record.playGames || null,
 			autoPlay: this.record.autoPlay || null,
-			steamClientRefreshToken: this.record.steamClientRefreshToken || null
+			steamClientRefreshToken: this.record.steamClientRefreshToken || null,
+			proxy: this.record.proxy || null
 		});
 	}
 }

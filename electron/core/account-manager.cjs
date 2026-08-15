@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { Store } = require('./store.cjs');
 const { getLogger } = require('./logger.cjs');
+const { normalizeProxy } = require('./proxy.cjs');
 const { SteamAccount, MAPPEvents } = require('./steam-account.cjs');
 
 class AccountManager {
@@ -16,8 +17,8 @@ class AccountManager {
 		this.events.on('guard:request', accountName => {
 			this.log.info(accountName, 'Требуется код Steam Guard — введите в интерфейсе');
 		});
-		this.events.on('account:save', ({ name, refreshToken, steamID64, avatar, password, lastLogin, mobileAccessToken, playGames, autoPlay, steamClientRefreshToken }) => {
-			this.store.update(name, { refreshToken, steamID64, avatar, password, lastLogin, mobileAccessToken, playGames, autoPlay, steamClientRefreshToken });
+		this.events.on('account:save', ({ name, refreshToken, steamID64, avatar, password, lastLogin, mobileAccessToken, playGames, autoPlay, steamClientRefreshToken, proxy }) => {
+			this.store.update(name, { refreshToken, steamID64, avatar, password, lastLogin, mobileAccessToken, playGames, autoPlay, steamClientRefreshToken, proxy });
 		});
 
 		this.massJobs = new Map();
@@ -97,7 +98,7 @@ class AccountManager {
 		return account;
 	}
 
-	_add(maFileContent) {
+	_add(maFileContent, proxy) {
 		let ma;
 		if (typeof maFileContent === 'string') {
 			try {
@@ -107,6 +108,10 @@ class AccountManager {
 			}
 		} else {
 			ma = maFileContent;
+		}
+
+		if (proxy != null && String(proxy).trim()) {
+			ma.proxy = String(proxy).trim();
 		}
 
 		const record = this.store.add(ma);
@@ -216,6 +221,46 @@ class AccountManager {
 		this.events.emit('account:status', account.statusPayload());
 		this.log.info(name, enabled ? 'Автоприём трейдов включён' : 'Автоприём трейдов выключен');
 		return account.statusPayload();
+	}
+
+	async setProxy(name, proxy) {
+		const account = this.accounts.get(name);
+		if (!account) throw new Error('Аккаунт не найден');
+		const value = (proxy || '').trim();
+		account.proxy = value;
+		account.record.proxy = value || undefined;
+		this.store.update(name, { proxy: value || null });
+		this.events.emit('account:status', account.statusPayload());
+		this.log.info(name, value ? `Прокси установлен: ${value}` : 'Прокси очищен');
+		return account.statusPayload();
+	}
+
+	// Проверка работоспособности прокси: реальный запрос через него к внешнему
+	// сервису и возврат внешнего IP. Доказывает, что Steam-соединения пойдут через прокси.
+	async testProxy(proxy) {
+		const p = normalizeProxy(proxy);
+		if (!p) throw new Error('Прокси не указан');
+		const Request = require('request');
+		const url = 'https://api.ipify.org?format=json';
+		return await new Promise((resolve, reject) => {
+			const opts = { url, json: true, timeout: 15000 };
+			try {
+				if (p.startsWith('socks')) {
+					const { SocksProxyAgent } = require('socks-proxy-agent');
+					opts.agent = new SocksProxyAgent(p);
+				} else {
+					opts.proxy = p;
+				}
+			} catch (e) {
+				return reject(new Error('Неверный формат прокси: ' + e.message));
+			}
+			Request(opts, (err, resp, body) => {
+				if (err) return reject(new Error(err.message));
+				if (!resp || resp.statusCode !== 200) return reject(new Error('HTTP ' + (resp ? resp.statusCode : '?')));
+				const ip = body && body.ip ? body.ip : (typeof body === 'string' ? body : '?');
+				resolve({ ok: true, ip });
+			});
+		});
 	}
 
 	// ——— «Играть в игры» (как ASF) ———

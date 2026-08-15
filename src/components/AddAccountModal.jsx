@@ -4,6 +4,7 @@ import { useI18n } from '../i18n.jsx';
 export default function AddAccountModal({ onClose, onSubmit, onPickFile }) {
 	const { t } = useI18n();
 	const [files, setFiles] = useState([]);
+	const [proxy, setProxy] = useState('');
 	const [busy, setBusy] = useState(false);
 	const fileInput = useRef(null);
 
@@ -39,7 +40,7 @@ export default function AddAccountModal({ onClose, onSubmit, onPickFile }) {
 	const handleSubmit = () => {
 		const valid = files.filter(f => f.parsed);
 		if (!valid.length) return;
-		onSubmit(valid.map(f => JSON.stringify(f.parsed)));
+		onSubmit(valid.map(f => JSON.stringify(f.parsed)), proxy.trim());
 	};
 
 	return (
@@ -86,6 +87,16 @@ export default function AddAccountModal({ onClose, onSubmit, onPickFile }) {
 						))}
 					</div>
 				)}
+
+				<div className="modal-field">
+					<label className="field-label">{t('Прокси')}</label>
+					<input
+						className="input"
+						value={proxy}
+						placeholder={t('Прокси (socks5://, http:// или host:port)')}
+						onChange={e => setProxy(e.target.value)}
+					/>
+				</div>
 
 				<div className="modal-actions">
 					<button className="btn primary" disabled={!files.some(f => f.parsed) || busy} onClick={handleSubmit}>

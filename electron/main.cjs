@@ -409,8 +409,8 @@ function setupIPC() {
 		return { accounts: manager.list(), logs: log.entries };
 	}));
 
-	ipcMain.handle('account:addMafile', (event, content) => wrap(event, async () => {
-		return manager._add(content);
+	ipcMain.handle('account:addMafile', (event, { content, proxy }) => wrap(event, async () => {
+		return manager._add(content, proxy);
 	}));
 
 	ipcMain.handle('account:login', (event, { name, password, savePassword }) => wrap(event, async () => {
@@ -442,6 +442,14 @@ function setupIPC() {
 
 	ipcMain.handle('account:autoAccept', (event, { name, enabled }) => wrap(event, async () => {
 		return manager.setAutoAccept(name, enabled);
+	}));
+
+	ipcMain.handle('account:setProxy', (event, { name, proxy }) => wrap(event, async () => {
+		return manager.setProxy(name, proxy);
+	}));
+
+	ipcMain.handle('account:testProxy', (event, proxy) => wrap(event, async () => {
+		return manager.testProxy(proxy);
 	}));
 
 	ipcMain.handle('account:autoPlay', (event, { name, enabled }) => wrap(event, async () => {

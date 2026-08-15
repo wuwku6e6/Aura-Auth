@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('aura', {
 	init: () => ipcRenderer.invoke('app:init'),
-	addMaFile: (content) => ipcRenderer.invoke('account:addMafile', content),
+	addMaFile: (content, proxy) => ipcRenderer.invoke('account:addMafile', { content, proxy }),
 	login: (name, password, savePassword) => ipcRenderer.invoke('account:login', { name, password, savePassword }),
 	submitGuard: (name, code) => ipcRenderer.invoke('account:submitGuard', { name, code }),
 	getGuardCode: (name) => ipcRenderer.invoke('account:guardCode', name),
@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('aura', {
 	setAutoConfirm: (name, enabled) => ipcRenderer.invoke('account:autoConfirm', { name, enabled }),
 	setAutoAccept: (name, enabled) => ipcRenderer.invoke('account:autoAccept', { name, enabled }),
 	setAutoPlay: (name, enabled) => ipcRenderer.invoke('account:autoPlay', { name, enabled }),
+	setProxy: (name, proxy) => ipcRenderer.invoke('account:setProxy', { name, proxy }),
+	testProxy: (proxy) => ipcRenderer.invoke('account:testProxy', proxy),
 	startPlay: (name, appIds) => ipcRenderer.invoke('account:play', { name, appIds }),
 	stopPlay: (name) => ipcRenderer.invoke('account:stopPlay', name),
 	listAccounts: () => ipcRenderer.invoke('account:list'),

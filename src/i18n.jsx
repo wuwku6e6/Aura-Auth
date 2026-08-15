@@ -172,6 +172,15 @@ const EN = {
 	'Не играет': 'Not playing',
 	'Ошибка проверки входа': 'Login check error',
 	'Переименовать': 'Rename',
+	'Прокси': 'Proxy',
+	'Прокси (socks5://user:pass@host:port или host:port:user:pass)': 'Proxy (socks5://user:pass@host:port or host:port:user:pass)',
+	'Прокси сохранён': 'Proxy saved',
+	'Проверить': 'Test',
+	'Проверка прокси…': 'Testing proxy…',
+	'Прокси работает (IP: {ip})': 'Proxy works (IP: {ip})',
+	'Ошибка прокси: {err}': 'Proxy error: {err}',
+	'Прокси (клик, чтобы изменить)': 'Proxy (click to edit)',
+	'Проверить прокси': 'Test proxy',
 	'Выполнить контракты обмена CS2 без запуска игры': 'Perform CS2 exchange contracts without launching the game',
 
 	// --- Cs2TradeWindow (contract/recipe tooltip) ---

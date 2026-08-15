@@ -29,7 +29,7 @@ class Store {
 		fs.writeFileSync(this.accountsPath, JSON.stringify(this.accounts, null, 2), 'utf8');
 	}
 
-	list() {
+		list() {
 		return Object.values(this.accounts).map(a => ({
 			name: a.accountName,
 			label: a.label || a.accountName,
@@ -40,6 +40,7 @@ class Store {
 			autoConfirm: !!a.autoConfirm,
 			autoAccept: !!a.autoAccept,
 			autoSendTarget: a.autoSendTarget || null,
+			proxy: a.proxy || null,
 			lastLogin: a.lastLogin || null,
 			online: !!a.online
 		}));
@@ -57,6 +58,7 @@ class Store {
 			serial: maData.serial_number || existing.serial,
 			revocation: maData.revocation_code || existing.revocation,
 			steamID64: maData.steamid || existing.steamID64 || null,
+			proxy: maData.proxy || existing.proxy || null,
 			addedAt: existing.addedAt || Date.now()
 		});
 		this._save();

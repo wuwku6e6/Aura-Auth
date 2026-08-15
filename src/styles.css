@@ -1031,3 +1031,22 @@ body {
 @media (prefers-reduced-motion: reduce) {
 	* { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
+
+/* ─── Proxy row (AccountCard) ─── */
+.proxy-row { margin-top: 6px; }
+.proxy-chip {
+	display: inline-flex; align-items: center; gap: 6px;
+	font-size: 12px; padding: 3px 10px; border-radius: 20px;
+	background: var(--bg-elev); color: var(--text);
+	border: 1px solid var(--border); cursor: pointer;
+	transition: border-color .15s ease;
+}
+.proxy-chip:hover { border-color: var(--accent); }
+.proxy-label { color: var(--text-faint); font-weight: 600; }
+.proxy-value { font-family: var(--mono); }
+.proxy-edit { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.proxy-input { max-width: 340px; font-size: 13px; font-family: var(--mono); }
+.proxy-test { font-size: 12px; }
+.proxy-test.ok { color: var(--green); }
+.proxy-test.err { color: var(--red); }
+.btn.tiny { font-size: 12px; padding: 4px 10px; border-radius: 8px; }

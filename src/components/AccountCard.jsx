@@ -43,6 +43,10 @@ export default function AccountCard({
 	const [playOpen, setPlayOpen] = useState(false);
 	const [editingName, setEditingName] = useState(false);
 	const [nameDraft, setNameDraft] = useState('');
+	const [editingProxy, setEditingProxy] = useState(false);
+	const [proxyDraft, setProxyDraft] = useState('');
+	const [proxyBusy, setProxyBusy] = useState(false);
+	const [proxyTest, setProxyTest] = useState(null);
 
 	const statusState = account.status?.state || 'offline';
 	const statusLabel = account.status?.state === 'online' ? t('Онлайн') : t('Не в сети');
@@ -164,6 +168,41 @@ export default function AccountCard({
 	};
 	const cancelRename = () => setEditingName(false);
 
+	const startProxy = () => {
+		setProxyDraft(account.proxy || '');
+		setEditingProxy(true);
+	};
+	const commitProxy = async () => {
+		const value = proxyDraft.trim();
+		setEditingProxy(false);
+		if (value === (account.proxy || '')) return;
+		setProxyBusy(true);
+		try {
+			await window.aura.setProxy(account.name, value);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setProxyBusy(false);
+		}
+	};
+	const cancelProxy = () => setEditingProxy(false);
+
+	const testProxy = async () => {
+		const value = (editingProxy ? proxyDraft : (account.proxy || '')).trim();
+		if (!value) return;
+		setProxyBusy(true);
+		setProxyTest({ ok: false, msg: t('Проверка прокси…') });
+		try {
+			const r = await window.aura.testProxy(value);
+			if (r && r.ok) setProxyTest({ ok: true, msg: t('Прокси работает (IP: {ip})', { ip: r.ip }) });
+			else setProxyTest({ ok: false, msg: t('Ошибка прокси: {err}', { err: (r && r.error) || '?' }) });
+		} catch (e) {
+			setProxyTest({ ok: false, msg: t('Ошибка прокси: {err}', { err: e.message }) });
+		} finally {
+			setProxyBusy(false);
+		}
+	};
+
 	const sent = (offers?.sent || []).sort((a, b) => (b.created || '').localeCompare(a.created || ''));
 	const received = (offers?.received || []).sort((a, b) => (b.created || '').localeCompare(a.created || ''));
 	const confs = confirmations || [];
@@ -227,6 +266,37 @@ export default function AccountCard({
 							<span className={`status-badge ${displayState}`}>{displayStatus}</span>
 							{account.steamID64 && <span className="meta-id">ID: {account.steamID64}</span>}
 							{account.hasSecrets && <span className="meta-chip">2FA ✓</span>}
+						</div>
+						<div className="proxy-row">
+							{editingProxy ? (
+								<div className="proxy-edit">
+									<input
+										className="input proxy-input"
+										value={proxyDraft}
+										placeholder={t('Прокси (socks5://, http:// или host:port)')}
+										autoFocus
+										disabled={proxyBusy}
+										onChange={e => setProxyDraft(e.target.value)}
+										onKeyDown={e => {
+											if (e.key === 'Enter') commitProxy();
+											if (e.key === 'Escape') cancelProxy();
+										}}
+									/>
+									<button className="btn tiny" onClick={commitProxy} disabled={proxyBusy}>{t('Сохранить')}</button>
+									<button className="btn tiny ghost" onClick={cancelProxy} disabled={proxyBusy}>{t('Отмена')}</button>
+									<button className="btn tiny ghost" onClick={testProxy} disabled={proxyBusy || !proxyDraft.trim()}>{t('Проверить')}</button>
+									{proxyTest && <span className={`proxy-test ${proxyTest.ok ? 'ok' : 'err'}`}>{proxyTest.msg}</span>}
+								</div>
+							) : (
+								<span className="proxy-chip" onClick={startProxy} title={t('Прокси (клик, чтобы изменить)')}>
+									<span className="proxy-label">{t('Прокси')}:</span>
+									<span className="proxy-value">{account.proxy || '—'}</span>
+									<button type="button" className="rename-btn" onClick={startProxy}>✎</button>
+									{account.proxy && (
+										<button type="button" className="rename-btn" onClick={testProxy} title={t('Проверить прокси')}>⟳</button>
+									)}
+								</span>
+							)}
 						</div>
 					</div>
 				</div>

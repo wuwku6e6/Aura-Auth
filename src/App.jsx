@@ -101,10 +101,10 @@ export default function App() {
 		requestAnimationFrame(() => logRef.current && (logRef.current.scrollTop = logRef.current.scrollHeight));
 	};
 
-	const handleAdd = async (contents /* array of JSON strings */) => {
+	const handleAdd = async (contents /* array of JSON strings */, proxy) => {
 		let lastAdded = null;
 		for (const content of contents) {
-			const { ok, data, error } = await api.addMaFile(content);
+			const { ok, data, error } = await api.addMaFile(content, proxy);
 			if (ok) {
 				lastAdded = data;
 				setAccounts(prev => [data, ...prev.filter(a => a.name !== data.name)]);

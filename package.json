@@ -1,6 +1,6 @@
 {
   "name": "aura-auth",
-  "version": "0.2.9",
+  "version": "1.0.1",
   "description": "Aura Auth - Steam Desktop Authenticator с авто-подтверждением и массовой отправкой трейдов",
   "author": "Aura Auth",
   "repository": {
@@ -45,6 +45,7 @@
     "appId": "com.aura.auth",
     "productName": "Aura Auth",
     "copyright": "Copyright © 2026 Aura Auth",
+    "icon": "build/icon.png",
     "directories": {
       "output": "release"
     },
@@ -52,10 +53,13 @@
     "files": [
       "dist/**/*",
       "electron/**/*",
+      "build/icon.png",
+      "build/icon.ico",
       "package.json"
     ],
     "win": {
       "target": "nsis",
+      "icon": "build/icon.ico",
       "artifactName": "${productName}-${version}-setup.${ext}",
       "signtoolOptions": {
         "sign": "build/empty-sign.cjs"
